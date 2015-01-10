@@ -1,0 +1,4 @@
+"tsbot" folder goes in 
+C:\Users\<Your User>\AppData\Roaming
+
+copy "TeamspeakFolder" into your teamspeak directory. It should replace two files (libeay and ssleay32)
