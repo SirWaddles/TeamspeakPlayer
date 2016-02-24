@@ -39,6 +39,7 @@ class AudioPacketQueue {
 public:
 	void ClearQueue();
 	void SeekTo(int packet);
+	int size();
 
 	void AddPacket(AudioPacket& nPacket);
 
@@ -57,18 +58,16 @@ class FFMpegAudioFile;
 
 class AudioFile {
 public:
-	AudioFile(std::string filepath);
-	~AudioFile();
-
-	bool readFrame();
+	AudioFile();
+	virtual ~AudioFile();
+	
 	void GetNextData(short* outL, short* outR);
 	void FinishTrack();
 
 	void SeekTo(double seconds);
 
 	bool looping;
-private:
-	FFMpegAudioFile* extDets;
+protected:
 
 	double duration;
 	int frames;
@@ -80,11 +79,25 @@ private:
 	bool TrackOver;
 };
 
+class AudioFileEncoded : public AudioFile {
+public:
+	AudioFileEncoded(std::string filepath);
+	virtual ~AudioFileEncoded();
+	bool readFrame();
+private:
+	FFMpegAudioFile* extDets;
+};
+
+class AudioFileData : public AudioFile {
+public:
+	AudioFileData(int num_samples, short* samples);
+	virtual ~AudioFileData();
+};
+
 class AudioM {
 public:
 	AudioM();
 	~AudioM();
-	std::vector<DeviceDetails> GetDeviceList();
 	void AudioData(const void* input, void* output, unsigned long frameCount, double time);
 	bool StartStream(DeviceDetails device);
 	void StopStream();
@@ -92,6 +105,7 @@ public:
 	void ClearQueue();
 	void SetupFileRenderer();
 	void PlayFile(std::string filepath, bool loop = false);
+	void PlayData(int num_samples, short* samples);
 	void SeekTo(double seconds);
 	void NextTrack();
 

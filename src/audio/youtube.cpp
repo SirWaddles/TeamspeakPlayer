@@ -1,8 +1,8 @@
 #include "../events/factory.h"
 #include "../lua_m/lua_m.h"
 #include "../util.h"
-//#include <boost/network.hpp>
-#include "../client/http_client.h"
+#include "../http/http.h"
+#include "audio.h"
 #include <memory>
 #include <cstdio>
 #include <iostream>
@@ -57,8 +57,6 @@ void YoutubeEvent::RunEvent(){
 	}
 
 	std::string ytWholeURL("http://www.youtube.com/watch?v=" + ytUrl);
-
-	std::unique_ptr<HTTPClient> httpClient(GetNewClient());
 	
 	/*boost::network::http::client client;
 	boost::network::http::client::request request("http://www.youtube.com/watch?v=" + ytUrl);
@@ -66,61 +64,32 @@ void YoutubeEvent::RunEvent(){
 	boost::network::http::client::response response = client.get(request);
 	lM->lineReader = response.body();*/
 
-	httpClient->RunRequest("http://www.youtube.com/watch?v=" + ytUrl);
-	httpClient->RunBody();
-	lM->lineReader = httpClient->WriteToString();
+	std::string url("https://www.youtube.com/watch?v=" + ytUrl);
+
+	std::string respData = GetHTTPContents(url);
+
+	lM->lineReader = respData;
+
 
 	lM->lineReaderChar = 0;
 	lM->RunFile(std::string(getenv("APPDATA")) + "/tsbot/youtube.lua");
 	lM->RunLuaFunc("SetYTURL", ytWholeURL);
 	lM->RunLuaFunc("GDoFinalEVal");
 
-	std::string networkPath = lM->GetLuaFuncStr();
-	printf("Downloading Video\n");
+	fullVideoUrl = lM->GetLuaFuncStr();
 
 	lM->RunLuaFunc("GetVideoTitle");
 	videoTitle = lM->GetLuaFuncStr();
 	hasTitle = true;
-
-	int bytesWritten = 0;
-	{
-		/*boost::network::http::client client;
-		boost::network::http::client::request request(networkPath);
-		boost::network::http::client::response response = client.get(request);*/
-
-		httpClient->RunRequest(networkPath);
-		//httpClient->RunHeaders();
-
-		//int totalContentSize = httpClient->GetContentSize();
-		//if (totalContentSize > 52428800){
-			// Run message stream
-		//	return;
-		//}
-
-		httpClient->RunBody();
-
-		std::ofstream ofs(ytSavePath.c_str(), std::ios_base::binary | std::ios_base::out);
-		//ofs << (boost::network::http::body(response));
-		httpClient->WriteToStream(ofs);
-
-		bytesWritten = ofs.tellp();
-	}
-
-	if (bytesWritten <= 5){
-		AddToLog("Failed to load: " + ytUrl + ". Now removing\n");
-		AddToLog("URL was:" + networkPath + "\n");
-		remove(ytSavePath.c_str());
-		return;
-	}
-
 	DoPlayFile();
 }
 
 void YoutubeEvent::DoPlayFile(){
-	AudioFileEvent* PlayEvent = new AudioFileEvent();
+	AudioM::getAudioManager()->PlayFile(fullVideoUrl, doLoop);
+	/*AudioFileEvent* PlayEvent = new AudioFileEvent();
 	if (doLoop){
 		PlayEvent->doLoop = true;
 	}
 	PlayEvent->SetupEvent("yt_vids/" + ytUrl + ".mp4");
-	EventManager::getEventManager()->AddEvent(PlayEvent);
+	EventManager::getEventManager()->AddEvent(PlayEvent);*/
 }

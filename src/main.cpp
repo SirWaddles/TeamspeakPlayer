@@ -1,15 +1,18 @@
 #include <string>
 #include <cerrno>
-#include "server/server.hpp"
 #include "audio/audio.h"
 #include "events/factory.h"
+#include <curl/curl.h>
 #include "util.h"
 #include <cstdio>
 #include <cstdlib>
-#include <boost/thread.hpp>
 #include "lua_m/lua_m.h"
-#include "client/http_client.h"
 #include <memory>
+#include <thread>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <flite.h>
 
 #define DLLEXPORT extern "C" __declspec(dllexport)
 
@@ -42,8 +45,8 @@ void StopStreamEvent::SetupArgs(std::deque<std::string>& args){
 
 }
 
-boost::thread* EventThread;
-boost::thread* AudioThread;
+std::thread* EventThread;
+std::thread* AudioThread;
 
 
 void DecoderThreadF(){
@@ -93,6 +96,8 @@ void SendTextMessage(std::string msg){
 
 void TextMessageParse(const char* message){
 
+	printf("Message: %s\n", message);
+
 	if (message[0] != '!') return;
 	message++;
 
@@ -117,15 +122,19 @@ void TextMessageParse(const char* message){
 
 void StartCapture(){
 	// Opening lua
+	curl_global_init(CURL_GLOBAL_ALL);
+	flite_init();
 	LuaManager::GetLuaManager();
 	AudioM* mMan = AudioM::getAudioManager();
 	mMan->SetupFileRenderer();
 	eventsRunning = true;
 
-	EventThread = new boost::thread(DecoderThreadF);
-	AudioThread = new boost::thread(AudioThreadF);
-
 	StartTimeCounter();
+
+	EventThread = new std::thread(DecoderThreadF);
+	AudioThread = new std::thread(AudioThreadF);
+
+	
 
 	//YoutubeEvent* nEvent = new YoutubeEvent("5pidokakU4I");
 	//EventManager::getEventManager()->AddEvent(nEvent);
@@ -145,9 +154,28 @@ void StopCapture(){
 	delete EventThread;
 	printf("Events stopped\n");
 
+	curl_global_cleanup();
 	delete EventManager::getEventManager();
 	delete AudioM::getAudioManager();
 	delete LuaManager::GetLuaManager();
+}
+
+void playAudioData(void* audioData) {
+	//printf("Sending data\n");
+}
+
+int main(int argc, char** argv) {
+	SetCaptureCallback(playAudioData);
+	StartCapture();
+
+	char entry[255];
+	while (entry != "exit") {
+		std::cin.getline(entry, 255);
+		TextMessageParse(entry);
+	}
+
+	StopCapture();
+	return 0;
 }
 
 #ifdef D2DEVICE

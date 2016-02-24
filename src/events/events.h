@@ -7,17 +7,27 @@
 
 class IThreadEvent {
 public:
-	virtual void RunEvent() = 0;
 	virtual void SetupArgs(std::deque<std::string>& args) ;
 	virtual std::string GetEventMessage();
 	virtual ~IThreadEvent(){}
+	void RunEvent();
+};
+
+class ISingleEvent : public IThreadEvent {
+public:
+	virtual void RunSingleEvent() = 0;
+};
+
+class IWorkEvent : public IThreadEvent {
+public:
+	virtual void RunEventLoop() = 0;
 };
 
 struct AudioEventData {
 	std::string filePath;
 };
 
-class AudioFileEvent : public IThreadEvent {
+class AudioFileEvent : public ISingleEvent {
 public:
 	virtual void RunEvent();
 
@@ -34,7 +44,7 @@ private:
 	AudioEventData* mData;
 };
 
-class YoutubeEvent : public IThreadEvent {
+class YoutubeEvent : public ISingleEvent {
 public:
 	virtual void RunEvent();
 	YoutubeEvent();
@@ -46,12 +56,13 @@ public:
 private:
 	std::string ytUrl;
 	std::string videoTitle;
+	std::string fullVideoUrl;
 	bool hasTitle;
 	bool eventActive;
 	bool doLoop;
 };
 
-class SeekToEvent : public IThreadEvent {
+class SeekToEvent : public ISingleEvent {
 public:
 	virtual void RunEvent();
 	void SetupArgs(std::deque<std::string>& args);
@@ -60,7 +71,7 @@ private:
 	double seekTo;
 };
 
-class NextTrackEvent : public IThreadEvent {
+class NextTrackEvent : public ISingleEvent {
 public:
 	NextTrackEvent();
 	virtual void RunEvent();
@@ -71,12 +82,23 @@ private:
 	bool overrideExit;
 };
 
-class StopTracksEvent : public IThreadEvent {
+class StopTracksEvent : public ISingleEvent {
 public:
 	virtual void RunEvent();
 	std::string GetEventMessage();
 private:
 	
+};
+
+class TextToSpeechEvent : public ISingleEvent {
+public:
+	TextToSpeechEvent();
+	virtual void RunEvent();
+	virtual void SetupArgs(std::deque<std::string>& args);
+	std::string GetEventMessage();
+private:
+	short* samples;
+	std::string textToSay;
 };
 
 class EventManager{

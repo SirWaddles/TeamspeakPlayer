@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -14,18 +14,19 @@
     <ProjectGuid>{127468F0-F441-4CD6-95F8-C1EB56197B35}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>TeamspeakPlayer</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -41,13 +42,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\Programming\TeamspeakPlayer\ext_include;D:\Programming\ffmpeg\ffmpeg\include;D:\Programming\lua\luajit\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Programming\TeamspeakPlayer\lib_debug;D:\Programming\ffmpeg\ffmpeg\lib;D:\Programming\lua\luajit\lib;D:\Programming\boost_1_55_0\boostlibs;D:\Programming\OpenSSL_Build\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\ProgrammingLibs\deps\include;D:\Programming\lua\luajit\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\ProgrammingLibs\deps\lib;D:\Programming\lua\luajit\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>D:\Programming\TeamspeakPlayer\ext_include;D:\Programming\ffmpeg\ffmpeg\include;D:\Programming\lua\luajit\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\Programming\TeamspeakPlayer\lib;D:\Programming\ffmpeg\ffmpeg\lib;D:\Programming\lua\luajit\lib;D:\Programming\Boost_Build\lib;D:\Programming\OpenSSL_Build\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>D:\ProgrammingLibs\deps\include;D:\Programming\lua\luajit\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\ProgrammingLibs\deps\lib;D:\Programming\lua\luajit\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -55,12 +56,12 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;D2DEVICE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>avcodec.lib;avutil.lib;avformat.lib;swresample.lib;lua51.lib;libeay32.lib;ssleay32.lib;cppnetlib-uri.lib;cppnetlib-client-connections.lib;cppnetlib-server-parsers.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>avcodec.lib;avutil.lib;avformat.lib;swresample.lib;lua51.lib;libcurl_a.lib;winmm.lib;cmu_us_rms.lib;fliteDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -71,24 +72,25 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;CURL_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>avcodec.lib;avutil.lib;avformat.lib;swresample.lib;lua51.lib;libeay32.lib;ssleay32.lib;cppnetlib-uri.lib;cppnetlib-server-parsers.lib;cppnetlib-client-connections.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <ImageHasSafeExceptionHandlers>true</ImageHasSafeExceptionHandlers>
+      <AdditionalDependencies>avcodec.lib;avutil.lib;avformat.lib;swresample.lib;lua51.lib;libcurl_a.lib;winmm.lib;cmu_us_rms.lib;fliteDll.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\audio\audio.cpp" />
     <ClCompile Include="..\src\audio\renderer.cpp" />
+    <ClCompile Include="..\src\audio\tts.cpp" />
     <ClCompile Include="..\src\audio\youtube.cpp" />
-    <ClCompile Include="..\src\client\http_client.cpp" />
     <ClCompile Include="..\src\events\factory.cpp" />
     <ClCompile Include="..\src\events\queue.cpp" />
+    <ClCompile Include="..\src\http\http.cpp" />
     <ClCompile Include="..\src\lua_m\lua_m.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\util.cpp" />
@@ -96,9 +98,9 @@
   <ItemGroup>
     <ClInclude Include="..\src\audio\audio.h" />
     <ClInclude Include="..\src\audio\renderer.h" />
-    <ClInclude Include="..\src\client\http_client.h" />
     <ClInclude Include="..\src\events\events.h" />
     <ClInclude Include="..\src\events\factory.h" />
+    <ClInclude Include="..\src\http\http.h" />
     <ClInclude Include="..\src\lua_m\lua_m.h" />
     <ClInclude Include="..\src\util.h" />
   </ItemGroup>

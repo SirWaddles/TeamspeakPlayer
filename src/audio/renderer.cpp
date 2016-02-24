@@ -4,10 +4,15 @@
 void AudioM::SetupFileRenderer(){
 	avcodec_register_all();
 	av_register_all();
-	
+	avformat_network_init();
 }
 
-AudioFile::AudioFile(std::string filepath){
+AudioFile::AudioFile() {
+	lPacketQueue = new AudioPacketQueue(this);
+	rPacketQueue = new AudioPacketQueue(this);
+}
+
+AudioFileEncoded::AudioFileEncoded(std::string filepath){
 
 	extDets = new FFMpegAudioFile();
 	TrackOver = false;
@@ -57,24 +62,25 @@ AudioFile::AudioFile(std::string filepath){
 		return;
 	}
 
-	lPacketQueue = new AudioPacketQueue(this);
-	rPacketQueue = new AudioPacketQueue(this);
-
 	frames = 0;
-	while (readFrame()){
+	bool frameSuccess = true;
+	while (lPacketQueue->size() <= 10){
+		frameSuccess = readFrame();
+		if (!frameSuccess) return;
 		frames++;
 	}
-
 }
 
-AudioFile::~AudioFile(){
-	if (lPacketQueue && rPacketQueue){
+AudioFile::~AudioFile() {
+	if (lPacketQueue && rPacketQueue) {
 		//lPacketQueue->ClearQueue();
 		//rPacketQueue->ClearQueue();
 		delete lPacketQueue;
 		delete rPacketQueue;
 	}
+}
 
+AudioFileEncoded::~AudioFileEncoded(){
 	avcodec_close(extDets->context);
 	avformat_close_input(&(extDets->pFormatCtx));
 	swr_free(&(extDets->resContext));
@@ -93,9 +99,10 @@ void AudioFile::FinishTrack(){
 	EventManager::getEventManager()->AddEvent(new NextTrackEvent());
 }
 
-bool AudioFile::readFrame(){
+bool AudioFileEncoded::readFrame(){
 	AVPacket pkt;
 	int err = av_read_frame(extDets->pFormatCtx, &pkt);
+	printf("Reading frame\n");
 	if (err == AVERROR_EOF){
 		printf("Reached end of file.\n");
 		return false;
@@ -107,10 +114,11 @@ bool AudioFile::readFrame(){
 		return true;
 	}
 	int gotFrame = 0;
-	AVFrame nFrame;
-	avcodec_get_frame_defaults(&nFrame);
-	extDets->frame = &nFrame;
-	int len = avcodec_decode_audio4(extDets->context, &nFrame, &gotFrame, &pkt);
+	AVFrame *nFrame = new AVFrame();
+	//avcodec_get_frame_defaults(&nFrame);
+	av_frame_unref(nFrame);
+	extDets->frame = nFrame;
+	int len = avcodec_decode_audio4(extDets->context, nFrame, &gotFrame, &pkt);
 
 	if (extDets->frame->nb_samples <= 0){
 		av_free_packet(&pkt);
@@ -138,9 +146,29 @@ bool AudioFile::readFrame(){
 	rPacketQueue->AddPacket(rPacket);
 	//printf("Read Bytes: %i\n", len);
 	av_free_packet(&pkt);
+
+	delete nFrame;
 	
 	//avcodec_free_frame(&frame);
 	return true;
+
+}
+
+AudioFileData::AudioFileData(int num_samples, short* samples) {
+	int data_size = num_samples * sizeof(short);
+	AudioPacket lPacket(data_size);
+	AudioPacket rPacket(data_size);
+	memcpy(lPacket.getData(), samples, data_size);
+	memcpy(rPacket.getData(), samples, data_size);
+
+	duration = double(num_samples) / 44000.0;
+	frames = 1;
+	lPacketQueue->AddPacket(lPacket);
+	rPacketQueue->AddPacket(rPacket);
+	TrackOver = false;
+}
+
+AudioFileData::~AudioFileData() {
 
 }
 

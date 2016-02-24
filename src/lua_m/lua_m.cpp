@@ -1,5 +1,5 @@
 #include "lua_m.h"
-#include <boost/network.hpp>
+#include "../http/http.h"
 
 int printConsole(lua_State* L){
 	int argc = lua_gettop(L);
@@ -138,13 +138,19 @@ int LuaManager::CreateLuaStream(std::string url){
 	int lId = mStreams.size();
 	mStreams.push_back(nStream);
 
-	boost::network::http::client client;
+	/*boost::network::http::client client;
 	boost::network::http::client::request request(url);
 	request << boost::network::header("Connection", "close");
 	boost::network::http::client::response response = client.get(request);
 	nStream->reader = response.body();
 
+	nStream->lineRead = 0;*/
+
+	std::string respData;
+	respData = GetHTTPContents(url);
+	nStream->reader = respData;
 	nStream->lineRead = 0;
+
 	return lId;
 }
 

@@ -10,31 +10,38 @@
 #include "../events/factory.h"
 
 AudioM::AudioM(){
-#ifdef D2DEVICE
-	PaError error = Pa_Initialize();
-	if (error != paNoError){
-		printf("PortAudio Error: %s\n", Pa_GetErrorText(error));
-		throw - 1;
-	}
-#endif
 	currentFile = NULL;
 }
 
 void AudioM::PlayFile(std::string filepath, bool loop){
-	{
+	/*{
 		std::ifstream fileTest(filepath);
 		if (!fileTest){
 			printf("File could not be loaded.\n");
 			return;
 		}
-	}
+	}*/
 
 	printf("Decoding/Reading: %s\n", filepath.c_str());
 
-	AudioFile* nFile = new AudioFile(filepath);
+	AudioFileEncoded* nFile = new AudioFileEncoded(filepath);
 	nFile->looping = loop;
 	if (fileQueue.size() <= 0){
 		printf("Assigned current file.\n");
+		currentFile = nFile;
+	}
+	fileQueue.push_back(nFile);
+
+	int frames = 0;
+	while (nFile->readFrame()) {
+		frames++;
+	}
+}
+
+void AudioM::PlayData(int num_samples, short* samples) {
+	AudioFileData* nFile = new AudioFileData(num_samples, samples);
+	nFile->looping = false;
+	if (fileQueue.size() <= 0) {
 		currentFile = nFile;
 	}
 	fileQueue.push_back(nFile);
@@ -75,9 +82,6 @@ void AudioM::SeekTo(double seconds){
 }
 
 AudioM::~AudioM(){
-#ifdef D2DEVICE
-	Pa_Terminate();
-#endif
 	std::list<AudioFile*>::iterator it;
 	for (it = fileQueue.begin(); it != fileQueue.end(); it++){
 		delete (*it);
@@ -98,61 +102,6 @@ void AudioM::ClearQueue(){
 
 }
 
-#ifdef D2DEVICE
-int GblStreamCallback(const void* input, void* output, unsigned long frameCount, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void* userData){
-	AudioM* manager = (AudioM*)userData;
-	manager->AudioData(input, output, frameCount, timeInfo->currentTime);
-	return 0;
-}
-
-bool AudioM::StartStream(DeviceDetails details){
-	//PaStreamParameters inputParams;
-	PaStreamParameters outputParams;
-
-	const PaDeviceInfo* devInfo = Pa_GetDeviceInfo(details.deviceNum);
-	printf("Input Channels: %i\n", devInfo->maxInputChannels);
-	printf("Output Channels: %i\n", devInfo->maxOutputChannels);
-
-	/*inputParams.channelCount = 1;
-	inputParams.device = details.deviceNum;
-	inputParams.hostApiSpecificStreamInfo = NULL;
-	inputParams.sampleFormat = paFloat32;
-	inputParams.suggestedLatency = devInfo->defaultLowInputLatency;*/
-
-	outputParams.channelCount = 2;
-	outputParams.device = details.deviceNum;
-	outputParams.hostApiSpecificStreamInfo = NULL;
-	outputParams.sampleFormat = paInt16;
-	outputParams.suggestedLatency = devInfo->defaultLowOutputLatency;
-
-	PaError error = Pa_IsFormatSupported(NULL, &outputParams, TARGET_SAMPLE_RATE);
-	if (error != paFormatIsSupported){
-		printf("Not Supported: %s\n", Pa_GetErrorText(error));
-		return false;
-	}
-
-	PaStream* stream;
-	error = Pa_OpenStream(&stream, NULL, &outputParams, TARGET_SAMPLE_RATE, paFramesPerBufferUnspecified, paNoFlag, GblStreamCallback, (void*) this);
-	if (error != paNoError){
-		printf("Audio Stream Failed: %s\n", Pa_GetErrorText(error));
-	}
-
-	Pa_StartStream(stream);
-	Pa_Sleep(2000);
-
-	StreamPtr = stream;
-	
-	return true;
-}
-
-void AudioM::StopStream(){
-	PaStream* stream = (PaStream*)StreamPtr;
-	Pa_StopStream(stream);
-	Pa_CloseStream(stream);
-}
-
-#else
-
 bool AudioM::StartStream(DeviceDetails details){
 	return false;
 
@@ -162,7 +111,6 @@ void AudioM::StopStream(){
 
 }
 
-#endif
 
 void AudioFile::GetNextData(short* outL, short* outR){
 	*outL = lPacketQueue->IncrementPacket();
@@ -198,6 +146,10 @@ short AudioPacketQueue::IncrementPacket(){
 		readHead = 0;
 	}
 	return *((short*)(&(packet->getData()[readHead])));
+}
+
+int AudioPacketQueue::size() {
+	return mPackets.size();
 }
 
 static int mainPacketID = 0;
@@ -261,24 +213,6 @@ void AudioPacketQueue::SeekTo(int packet){
 void AudioPacketQueue::AddPacket(AudioPacket& nPacket){
 	mPackets.push_back(std::move(nPacket));
 }
-
-#ifdef D2DEVICE
-std::vector<DeviceDetails> AudioM::GetDeviceList(){
-	int numDevices = Pa_GetDeviceCount();
-	std::vector<DeviceDetails> dList;
-	dList.reserve(numDevices);
-	for (int i = 0; i < numDevices; i++){
-		const PaDeviceInfo *deviceInfo;
-		deviceInfo = Pa_GetDeviceInfo(i);
-		DeviceDetails nDetails;
-		nDetails.deviceName = std::string(Pa_GetHostApiInfo(deviceInfo->hostApi)->name) + std::string(deviceInfo->name);
-		nDetails.deviceNum = i;
-		dList.push_back(nDetails);
-	}
-	return dList;
-}
-
-#endif
 
 static EventsF::EventCreatorType<AudioFileEvent> snd("snd");
 

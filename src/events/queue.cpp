@@ -1,13 +1,13 @@
 #include "events.h"
 #include "../util.h"
-#include <boost/thread.hpp>
+#include <mutex>
 
 class ThreadedEventManager : public EventManager {
 public:
 	virtual void AddEvent(IThreadEvent* tEvent);
 	virtual void RunEvents();
 protected:
-	boost::mutex lockMtx;
+	std::mutex lockMtx;
 };
 
 EventManager* EventManager::mEventManager = NULL;
