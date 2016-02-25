@@ -42,8 +42,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\ProgrammingLibs\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\ProgrammingLibs\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>..\deps\include;$(IncludePath)</IncludePath>
+    <LibraryPath>..\deps\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>

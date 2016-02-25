@@ -4,7 +4,9 @@ ehthumbs.db
 
 *.obj
 
-project/Debug/
-project/Release/
+Debug/
+Release/
 project/TeamspeakPlayer.vcxproj.filters
-project/.vs/
+.vs/
+deps/
+TeamspeakPlayer.sln

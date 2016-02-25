@@ -107,10 +107,12 @@ private:
 	std::string textToSay;
 };
 
-class EventManager{
+class EventManager {
 public:
 	virtual void AddEvent(IThreadEvent* tEvent) = 0;
-	virtual void RunEvents() = 0;
+	virtual void BuildEvents() = 0;
+	virtual IThreadEvent* GetNextEvent() = 0;
+	virtual ~EventManager() {}
 
 	static EventManager* getEventManager();
 protected:

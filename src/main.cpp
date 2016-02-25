@@ -45,16 +45,7 @@ void StopStreamEvent::SetupArgs(std::deque<std::string>& args){
 
 }
 
-std::thread* EventThread;
 std::thread* AudioThread;
-
-
-void DecoderThreadF(){
-	while (eventsRunning){
-		ThreadSleep(20);
-		EventManager::getEventManager()->RunEvents();
-	}
-}
 
 CaptureCallback currentCallback = NULL;
 CaptureCallback textCallback = NULL;
@@ -86,10 +77,6 @@ void SetTextCallback(CaptureCallback nBack){
 
 void SendTextMessage(std::string msg){
 	if (msg.length() <= 0) return;
-#ifdef D2DEVICE
-	printf("Text: %s\n", msg.c_str());
-	return;
-#endif
 	if (!textCallback) return;
 	textCallback((void*)msg.c_str());
 }
@@ -131,7 +118,7 @@ void StartCapture(){
 
 	StartTimeCounter();
 
-	EventThread = new std::thread(DecoderThreadF);
+	EventManager::getEventManager()->BuildEvents();
 	AudioThread = new std::thread(AudioThreadF);
 
 	
@@ -150,8 +137,6 @@ void StopCapture(){
 
 	printf("Events stopping\n");
 	EventManager::getEventManager()->AddEvent(new StopStreamEvent());
-	EventThread->join();
-	delete EventThread;
 	printf("Events stopped\n");
 
 	curl_global_cleanup();
@@ -165,8 +150,14 @@ void playAudioData(void* audioData) {
 	//printf("Sending data\n");
 }
 
+void printTextMessage(void* msg) {
+	char* messageContents = (char*)msg;
+	printf("Text: %s\n", messageContents);
+}
+
 int main(int argc, char** argv) {
 	SetCaptureCallback(playAudioData);
+	SetTextCallback(printTextMessage);
 	StartCapture();
 
 	char entry[255];
