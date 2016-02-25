@@ -37,7 +37,7 @@ std::string YoutubeEvent::GetEventMessage(){
 	return "Playing: " + ytUrl;
 }
 
-void YoutubeEvent::RunEvent(){
+void YoutubeEvent::RunSingleEvent(){
 	if (!eventActive){
 		return;
 	}

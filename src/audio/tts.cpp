@@ -13,7 +13,7 @@ TextToSpeechEvent::TextToSpeechEvent() {
 
 }
 
-void TextToSpeechEvent::RunEvent() {
+void TextToSpeechEvent::RunSingleEvent() {
 	cst_voice* v;
 	v = register_cmu_us_rms(NULL);
 	cst_wave* wave = flite_text_to_wave(textToSay.c_str(), v);

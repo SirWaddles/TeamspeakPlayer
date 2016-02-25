@@ -160,6 +160,7 @@ void StopCapture(){
 	delete LuaManager::GetLuaManager();
 }
 
+#ifdef TSPLAYER_DEBUG
 void playAudioData(void* audioData) {
 	//printf("Sending data\n");
 }
@@ -169,7 +170,7 @@ int main(int argc, char** argv) {
 	StartCapture();
 
 	char entry[255];
-	while (entry != "exit") {
+	while (strcmp("exit", entry) != 0) {
 		std::cin.getline(entry, 255);
 		TextMessageParse(entry);
 	}
@@ -177,6 +178,7 @@ int main(int argc, char** argv) {
 	StopCapture();
 	return 0;
 }
+#endif
 
 #ifdef D2DEVICE
 

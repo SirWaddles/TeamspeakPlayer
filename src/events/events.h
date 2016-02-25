@@ -10,17 +10,23 @@ public:
 	virtual void SetupArgs(std::deque<std::string>& args) ;
 	virtual std::string GetEventMessage();
 	virtual ~IThreadEvent(){}
-	void RunEvent();
+	virtual void RunEvent() = 0;
 };
 
 class ISingleEvent : public IThreadEvent {
 public:
 	virtual void RunSingleEvent() = 0;
+	void RunEvent();
 };
 
 class IWorkEvent : public IThreadEvent {
 public:
 	virtual void RunEventLoop() = 0;
+	void RunEvent();
+protected:
+	void StopEvent();
+private:
+	bool eventWorking;
 };
 
 struct AudioEventData {
@@ -29,7 +35,7 @@ struct AudioEventData {
 
 class AudioFileEvent : public ISingleEvent {
 public:
-	virtual void RunEvent();
+	virtual void RunSingleEvent();
 
 	void SetupEvent(std::string filepath);
 	void SetupArgs(std::deque<std::string>& args);
@@ -46,7 +52,7 @@ private:
 
 class YoutubeEvent : public ISingleEvent {
 public:
-	virtual void RunEvent();
+	virtual void RunSingleEvent();
 	YoutubeEvent();
 
 	void SetupArgs(std::deque<std::string>& args);
@@ -64,7 +70,7 @@ private:
 
 class SeekToEvent : public ISingleEvent {
 public:
-	virtual void RunEvent();
+	virtual void RunSingleEvent();
 	void SetupArgs(std::deque<std::string>& args);
 	std::string GetEventMessage();
 private:
@@ -74,7 +80,7 @@ private:
 class NextTrackEvent : public ISingleEvent {
 public:
 	NextTrackEvent();
-	virtual void RunEvent();
+	virtual void RunSingleEvent();
 	virtual void SetupArgs(std::deque<std::string>& args);
 	std::string GetEventMessage();
 	void OverrideExit();
@@ -84,7 +90,7 @@ private:
 
 class StopTracksEvent : public ISingleEvent {
 public:
-	virtual void RunEvent();
+	virtual void RunSingleEvent();
 	std::string GetEventMessage();
 private:
 	
@@ -93,7 +99,7 @@ private:
 class TextToSpeechEvent : public ISingleEvent {
 public:
 	TextToSpeechEvent();
-	virtual void RunEvent();
+	virtual void RunSingleEvent();
 	virtual void SetupArgs(std::deque<std::string>& args);
 	std::string GetEventMessage();
 private:

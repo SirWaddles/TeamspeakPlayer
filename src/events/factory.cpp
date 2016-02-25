@@ -21,3 +21,19 @@ namespace EventsF {
 	}
 
 }
+
+void ISingleEvent::RunEvent() {
+	RunSingleEvent();
+}
+
+void IWorkEvent::RunEvent() {
+	eventWorking = true;
+	while (eventWorking) {
+		RunEventLoop();
+	}
+}
+
+void IWorkEvent::StopEvent() {
+	eventWorking = false;
+}
+

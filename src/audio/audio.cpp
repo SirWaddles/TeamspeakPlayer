@@ -226,7 +226,7 @@ AudioFileEvent::~AudioFileEvent(){
 	delete mData;
 }
 
-void AudioFileEvent::RunEvent(){
+void AudioFileEvent::RunSingleEvent(){
 	if (!eventActive) return;
 	AudioM::getAudioManager()->PlayFile(mData->filePath, doLoop);
 }
@@ -252,7 +252,7 @@ std::string AudioFileEvent::GetEventMessage(){
 
 static EventsF::EventCreatorType<SeekToEvent> seekto("seekto");
 
-void SeekToEvent::RunEvent(){
+void SeekToEvent::RunSingleEvent(){
 	AudioM::getAudioManager()->SeekTo(seekTo);
 }
 
@@ -270,7 +270,7 @@ NextTrackEvent::NextTrackEvent(){
 	overrideExit = false;
 }
 
-void NextTrackEvent::RunEvent(){
+void NextTrackEvent::RunSingleEvent(){
 	AudioM::getAudioManager()->NextTrack();
 }
 
@@ -292,6 +292,6 @@ std::string StopTracksEvent::GetEventMessage(){
 	return "Stopping Tracks";
 }
 
-void StopTracksEvent::RunEvent(){
+void StopTracksEvent::RunSingleEvent(){
 	AudioM::getAudioManager()->StopTrack();
 }
