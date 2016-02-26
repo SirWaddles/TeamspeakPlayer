@@ -49,31 +49,13 @@ void YoutubeEvent::RunSingleEvent(){
 		ytUrl = ytUrl.substr(vpos + 2, 11);
 	}
 
-	std::string ytSavePath(std::string(getenv("APPDATA")) + "/tsbot/yt_vids/" + ytUrl + ".mp4");
-
-	if (doesFileExist(ytSavePath)){
-		DoPlayFile();
-		return;
-	}
-
-	std::string ytWholeURL("http://www.youtube.com/watch?v=" + ytUrl);
-	
-	/*boost::network::http::client client;
-	boost::network::http::client::request request("http://www.youtube.com/watch?v=" + ytUrl);
-	request << boost::network::header("Connection", "close");
-	boost::network::http::client::response response = client.get(request);
-	lM->lineReader = response.body();*/
-
 	std::string url("https://www.youtube.com/watch?v=" + ytUrl);
-
 	std::string respData = GetHTTPContents(url);
 
 	lM->lineReader = respData;
-
-
 	lM->lineReaderChar = 0;
 	lM->RunFile(std::string(getenv("APPDATA")) + "/tsbot/youtube.lua");
-	lM->RunLuaFunc("SetYTURL", ytWholeURL);
+	lM->RunLuaFunc("SetYTURL", url);
 	lM->RunLuaFunc("GDoFinalEVal");
 
 	fullVideoUrl = lM->GetLuaFuncStr();
@@ -81,15 +63,7 @@ void YoutubeEvent::RunSingleEvent(){
 	lM->RunLuaFunc("GetVideoTitle");
 	videoTitle = lM->GetLuaFuncStr();
 	hasTitle = true;
-	DoPlayFile();
-}
 
-void YoutubeEvent::DoPlayFile(){
-	AudioM::getAudioManager()->PlayFile(fullVideoUrl, doLoop);
-	/*AudioFileEvent* PlayEvent = new AudioFileEvent();
-	if (doLoop){
-		PlayEvent->doLoop = true;
-	}
-	PlayEvent->SetupEvent("yt_vids/" + ytUrl + ".mp4");
-	EventManager::getEventManager()->AddEvent(PlayEvent);*/
+	AudioFileEncoded* ytTrack = new AudioFileEncoded(fullVideoUrl);
+	AudioM::getAudioManager()->AddFile(ytTrack);
 }

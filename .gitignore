@@ -10,3 +10,5 @@ project/TeamspeakPlayer.vcxproj.filters
 .vs/
 deps/
 TeamspeakPlayer.sln
+TeamspeakPlayer.opensdf
+TeamspeakPlayer.sdf

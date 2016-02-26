@@ -29,25 +29,19 @@ private:
 	bool eventWorking;
 };
 
-struct AudioEventData {
-	std::string filePath;
-};
-
 class AudioFileEvent : public ISingleEvent {
 public:
 	virtual void RunSingleEvent();
 
-	void SetupEvent(std::string filepath);
 	void SetupArgs(std::deque<std::string>& args);
 	std::string GetEventMessage();
 
 	AudioFileEvent();
 	~AudioFileEvent();
-
-	bool doLoop;
 private:
 	bool eventActive;
-	AudioEventData* mData;
+	bool doLoop;
+	std::string filePath;
 };
 
 class YoutubeEvent : public ISingleEvent {
@@ -57,8 +51,6 @@ public:
 
 	void SetupArgs(std::deque<std::string>& args);
 	std::string GetEventMessage();
-
-	void DoPlayFile();
 private:
 	std::string ytUrl;
 	std::string videoTitle;

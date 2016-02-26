@@ -21,6 +21,7 @@ EventWorker::EventWorker() : workerThread(&EventWorker::Work, this) {
 
 EventWorker::~EventWorker() {
 	printf("Joining thread\n");
+	threadWorking = false; // Should be atomic
 	workerThread.join();
 }
 

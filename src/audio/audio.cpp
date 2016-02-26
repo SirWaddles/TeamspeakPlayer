@@ -10,55 +10,38 @@
 #include "../events/factory.h"
 
 AudioM::AudioM(){
-	currentFile = NULL;
+	currentFile = nullptr;
 }
 
-void AudioM::PlayFile(std::string filepath, bool loop){
-	/*{
-		std::ifstream fileTest(filepath);
-		if (!fileTest){
-			printf("File could not be loaded.\n");
-			return;
-		}
-	}*/
-
-	printf("Decoding/Reading: %s\n", filepath.c_str());
-
-	AudioFileEncoded* nFile = new AudioFileEncoded(filepath);
-	nFile->looping = loop;
-	if (fileQueue.size() <= 0){
-		printf("Assigned current file.\n");
-		currentFile = nFile;
-	}
-	fileQueue.push_back(nFile);
-
-	int frames = 0;
-	while (nFile->readFrame()) {
-		frames++;
-	}
-}
-
-void AudioM::PlayData(int num_samples, short* samples) {
-	AudioFileData* nFile = new AudioFileData(num_samples, samples);
-	nFile->looping = false;
+void AudioM::AddFile(AudioFile* file) {
+	std::lock_guard<std::mutex> lock(mainLock);
 	if (fileQueue.size() <= 0) {
-		currentFile = nFile;
+		printf("Assigned current file.\n");
+		currentFile = file;
 	}
-	fileQueue.push_back(nFile);
+	fileQueue.push_back(file);
+}
+
+AudioFile* AudioM::GetCurrentTrack() {
+	if (fileQueue.size() <= 0) {
+		return nullptr;
+	}
+	return fileQueue.front();
 }
 
 void AudioM::NextTrack(){
 	if (fileQueue.size() <= 0){
 		return;
 	}
+
+	std::lock_guard<std::mutex> lock(mainLock);
 	AudioFile* lastTrack = fileQueue.front();
 	fileQueue.pop_front();
+	currentFile = nullptr;
+	EventManager::getEventManager()->AddEvent(new TrackDeleteEvent(lastTrack));
 	if (fileQueue.size() <= 0){
-		currentFile = NULL;
 		return;
 	}
-	// Extremely bloody hacky, not sure what to do here.
-	EventManager::getEventManager()->AddEvent(new TrackDeleteEvent(lastTrack));
 	currentFile = fileQueue.front();
 }
 
@@ -66,7 +49,7 @@ void AudioM::StopTrack(){
 	if (fileQueue.size() <= 0){
 		return;
 	}
-	currentFile = NULL;
+	currentFile = nullptr;
 	
 	std::list<AudioFile*>::iterator it;
 	for (it = fileQueue.begin(); it != fileQueue.end(); it++){
@@ -102,23 +85,35 @@ void AudioM::ClearQueue(){
 
 }
 
-bool AudioM::StartStream(DeviceDetails details){
-	return false;
-
+bool AudioFile::IsTrackOver() {
+	return TrackOver;
 }
-
-void AudioM::StopStream(){
-
-}
-
 
 void AudioFile::GetNextData(short* outL, short* outR){
 	*outL = lPacketQueue->IncrementPacket();
 	*outR = rPacketQueue->IncrementPacket();
 }
 
+void AudioFile::GetAllData(short* outData, unsigned long frameCount) {
+	for (unsigned int i = 0; i < frameCount; i++) {
+		if (TrackOver) {
+			std::memset(outData, 0, (frameCount - i) * 4);
+			break;
+		}
+
+		short* outL = outData++;
+		short* outR = outData++;
+		GetNextData(outL, outR);
+	}
+}
+
+void AudioFile::FinishTrack() {
+	if (looping) return;
+	if (TrackOver) return;
+	TrackOver = true;
+}
+
 void AudioM::AudioData(const void* input, void* output, unsigned long frameCount, double time){
-	// MAY BE RUNNING ON SECONDARY THREAD. VERY TIME-CRITICAL, PRE-PROCESS AS MUCH AS POSSIBLE.
 	short* out = (short*)output;
 
 	if (!currentFile){
@@ -126,10 +121,10 @@ void AudioM::AudioData(const void* input, void* output, unsigned long frameCount
 		return;
 	}
 
-	for (unsigned int i = 0; i < frameCount; i++){
-		short* outL = out++;
-		short* outR = out++;
-		currentFile->GetNextData(outL, outR);
+	currentFile->GetAllData(out, frameCount);
+
+	if (currentFile->IsTrackOver()) {
+		NextTrack();
 	}
 }
 
@@ -141,6 +136,8 @@ short AudioPacketQueue::IncrementPacket(){
 		if (currentPacket >= mPackets.size()){
 			currentPacket = 0;
 			ownerFile->FinishTrack();
+			//AudioM::getAudioManager()->NextTrack();
+			return 0;
 		}
 		packet = &mPackets[currentPacket];
 		readHead = 0;
@@ -222,27 +219,33 @@ AudioFileEvent::AudioFileEvent(){
 }
 
 AudioFileEvent::~AudioFileEvent(){
-	if (!eventActive) return;
-	delete mData;
+
 }
 
 void AudioFileEvent::RunSingleEvent(){
 	if (!eventActive) return;
-	AudioM::getAudioManager()->PlayFile(mData->filePath, doLoop);
-}
-
-void AudioFileEvent::SetupEvent(std::string filepath){
-	eventActive = true;
-	AudioEventData* data = new AudioEventData();
-	data->filePath = std::string(getenv("APPDATA")) + "/tsbot/" + filepath;
-	mData = data;
+	AudioFileEncoded* nFile = new AudioFileEncoded(filePath);
+	nFile->looping = doLoop;
+	while (nFile->readFrame()) continue;
+	AudioM::getAudioManager()->AddFile(nFile);
 }
 
 void AudioFileEvent::SetupArgs(std::deque<std::string>& args){
 	if (args.size() <= 0){
 		return;
 	}
-	SetupEvent("storage/" + args[0]);
+	filePath = std::string("storage/") + std::string(getenv("APPDATA")) + "/tsbot/" + args[0];
+	{
+		std::ifstream fileTest(filePath);
+		if (!fileTest) {
+			printf("File could not be loaded.\n");
+			return;
+		}
+	}
+	if (args.size() > 1 && args[1] == "loop") {
+		doLoop = true;
+	}
+	eventActive = true;
 }
 
 std::string AudioFileEvent::GetEventMessage(){
@@ -271,7 +274,10 @@ NextTrackEvent::NextTrackEvent(){
 }
 
 void NextTrackEvent::RunSingleEvent(){
-	AudioM::getAudioManager()->NextTrack();
+	AudioFile* currentFile = AudioM::getAudioManager()->GetCurrentTrack();
+	if (currentFile) {
+		currentFile->FinishTrack();
+	}
 }
 
 void NextTrackEvent::SetupArgs(std::deque<std::string>& args){

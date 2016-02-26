@@ -4,18 +4,11 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <mutex>
+#include <atomic>
 #include "../events/events.h"
 
-#ifdef D2DEVICE
-#define TARGET_SAMPLE_RATE 44100
-#else
 #define TARGET_SAMPLE_RATE 48000
-#endif
-
-struct DeviceDetails {
-	std::string deviceName;
-	int deviceNum;
-};
 
 class AudioPacket {
 public:
@@ -61,13 +54,16 @@ public:
 	AudioFile();
 	virtual ~AudioFile();
 	
-	void GetNextData(short* outL, short* outR);
+	virtual void GetAllData(short* outData, unsigned long frameCount);
 	void FinishTrack();
-
 	void SeekTo(double seconds);
+
+	bool IsTrackOver();
 
 	bool looping;
 protected:
+
+	void GetNextData(short* outL, short* outR);
 
 	double duration;
 	int frames;
@@ -76,7 +72,7 @@ protected:
 	AudioPacketQueue* lPacketQueue;
 	AudioPacketQueue* rPacketQueue;
 
-	bool TrackOver;
+	std::atomic<bool> TrackOver;
 };
 
 class AudioFileEncoded : public AudioFile {
@@ -99,19 +95,19 @@ public:
 	AudioM();
 	~AudioM();
 	void AudioData(const void* input, void* output, unsigned long frameCount, double time);
-	bool StartStream(DeviceDetails device);
-	void StopStream();
 	void StopTrack();
 	void ClearQueue();
 	void SetupFileRenderer();
-	void PlayFile(std::string filepath, bool loop = false);
-	void PlayData(int num_samples, short* samples);
 	void SeekTo(double seconds);
-	void NextTrack();
+	void AddFile(AudioFile* file);
+	AudioFile* GetCurrentTrack();
 
 	static AudioM* getAudioManager();
 private:
+	void NextTrack();
+
 	void* StreamPtr;
+	std::mutex mainLock;
 
 	std::list<AudioFile*> fileQueue;
 	AudioFile* currentFile;

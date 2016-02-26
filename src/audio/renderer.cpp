@@ -92,13 +92,6 @@ void AudioFile::SeekTo(double seconds){
 	rPacketQueue->SeekTo((int)target);
 }
 
-void AudioFile::FinishTrack(){
-	if (looping) return;
-	if (TrackOver) return;
-	TrackOver = true;
-	EventManager::getEventManager()->AddEvent(new NextTrackEvent());
-}
-
 bool AudioFileEncoded::readFrame(){
 	AVPacket pkt;
 	int err = av_read_frame(extDets->pFormatCtx, &pkt);

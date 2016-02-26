@@ -24,27 +24,6 @@ DLLEXPORT void SetCaptureCallback(CaptureCallback);
 DLLEXPORT void SetTextCallback(CaptureCallback);
 DLLEXPORT void TextMessageParse(const char* message);
 
-class StopStreamEvent : public IThreadEvent {
-public:
-	void RunEvent();
-	std::string GetEventMessage();
-	void SetupArgs(std::deque<std::string>& args);
-};
-
-bool eventsRunning = false;
-
-void StopStreamEvent::RunEvent(){
-	eventsRunning = false;
-}
-
-std::string StopStreamEvent::GetEventMessage(){
-	return "";
-}
-
-void StopStreamEvent::SetupArgs(std::deque<std::string>& args){
-
-}
-
 std::thread* AudioThread;
 
 CaptureCallback currentCallback = NULL;
@@ -114,17 +93,11 @@ void StartCapture(){
 	LuaManager::GetLuaManager();
 	AudioM* mMan = AudioM::getAudioManager();
 	mMan->SetupFileRenderer();
-	eventsRunning = true;
 
 	StartTimeCounter();
 
 	EventManager::getEventManager()->BuildEvents();
 	AudioThread = new std::thread(AudioThreadF);
-
-	
-
-	//YoutubeEvent* nEvent = new YoutubeEvent("5pidokakU4I");
-	//EventManager::getEventManager()->AddEvent(nEvent);
 }
 
 void StopCapture(){
@@ -134,10 +107,6 @@ void StopCapture(){
 	AudioThread->join();
 	delete AudioThread;
 	printf("Audio stopped\n");
-
-	printf("Events stopping\n");
-	EventManager::getEventManager()->AddEvent(new StopStreamEvent());
-	printf("Events stopped\n");
 
 	curl_global_cleanup();
 	delete EventManager::getEventManager();
@@ -169,34 +138,4 @@ int main(int argc, char** argv) {
 	StopCapture();
 	return 0;
 }
-#endif
-
-#ifdef D2DEVICE
-
-int main(int argc, char** argv){
-
-	StartCapture();
-
-	AudioM* audioManager = AudioM::getAudioManager();
-	std::vector<DeviceDetails> dList = audioManager->GetDeviceList();
-	std::vector<DeviceDetails>::iterator it;
-	for (it = dList.begin(); it < dList.end(); it++){
-		printf("Device %i Name: %s\n", it->deviceNum, it->deviceName.c_str());
-	}
-	int selectDevice = 0;
-	printf("Please select a device number.\n");
-	std::cin >> selectDevice;
-	while (audioManager->StartStream(dList[selectDevice]) != true){
-		printf("Sorry, the audio device could not start. Please choose another.\n");
-		std::cin >> selectDevice;
-	}
-
-	std::string message;
-	while (message != "EXIT"){
-		std::getline(std::cin, message);
-		TextMessageParse(message.c_str());
-	}
-	return 0;
-}
-
 #endif
