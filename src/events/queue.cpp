@@ -15,7 +15,6 @@ private:
 };
 
 EventWorker::EventWorker() : workerThread(&EventWorker::Work, this) {
-	printf("Default\n");
 	threadWorking = true;
 }
 
@@ -26,7 +25,6 @@ EventWorker::~EventWorker() {
 }
 
 EventWorker::EventWorker(const EventWorker& workerClone) : workerThread(&EventWorker::Work, this) {
-	printf("Copy\n");
 	threadWorking = true;
 }
 
@@ -85,9 +83,8 @@ void EventWorker::Work() {
 
 void ThreadedEventManager::AddEvent(IThreadEvent* tEvent){
 	printf("Adding event.\n");
-	lockMtx.lock();
+	std::lock_guard<std::mutex> eventLock(lockMtx);
 	mEvents.push_back(tEvent);
-	lockMtx.unlock();
 }
 
 /*void ThreadedEventManager::RunEvents(){

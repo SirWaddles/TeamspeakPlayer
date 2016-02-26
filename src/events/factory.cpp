@@ -26,13 +26,16 @@ void ISingleEvent::RunEvent() {
 	RunSingleEvent();
 }
 
+void ISingleEvent::StopEvent() {
+
+}
+
 void IWorkEvent::RunEvent() {
 	eventWorking = true;
 	RunStartEvent();
 	for (;;) {
 		std::lock_guard<std::mutex> loopLock(eventLock);
 		if (!eventWorking) {
-			printf("Breaking loop\n");
 			break;
 		}
 		RunEventLoop();
@@ -40,9 +43,7 @@ void IWorkEvent::RunEvent() {
 }
 
 void IWorkEvent::StopEvent() {
-	printf("Acquiring Lock\n");
 	std::lock_guard<std::mutex> stopLock(eventLock);
-	printf("Locked\n");
 	eventWorking = false;
 }
 

@@ -155,6 +155,11 @@ short AudioPacketQueue::IncrementPacket() {
     readHead += 2;
 	if (readHead >= packet->getLength()) {
 		currentPacket++;
+		if (currentPacket >= mPackets.size()) {
+			ownerFile->OutOfData();
+			return 0;
+		}
+		packet = &mPackets[currentPacket];
 		readHead = 0;
 	}
 	return *((short*)(&(packet->getData()[readHead])));
@@ -301,7 +306,7 @@ void NextTrackEvent::SetupArgs(std::deque<std::string>& args){
 }
 
 std::string NextTrackEvent::GetEventMessage(){
-	return "Next Track";
+	return "";
 }
 
 void NextTrackEvent::OverrideExit(){

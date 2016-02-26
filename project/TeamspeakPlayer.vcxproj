@@ -42,13 +42,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\deps\include;$(IncludePath)</IncludePath>
-    <LibraryPath>..\deps\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>../deps/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../deps/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>D:\ProgrammingLibs\deps\include;D:\Programming\lua\luajit\include;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\ProgrammingLibs\deps\lib;D:\Programming\lua\luajit\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>../deps/include;$(IncludePath)</IncludePath>
+    <LibraryPath>../deps/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

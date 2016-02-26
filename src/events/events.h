@@ -12,12 +12,14 @@ public:
 	virtual std::string GetEventMessage();
 	virtual ~IThreadEvent(){}
 	virtual void RunEvent() = 0;
+	virtual void StopEvent() = 0;
 };
 
 class ISingleEvent : public IThreadEvent {
 public:
 	virtual void RunSingleEvent() = 0;
 	void RunEvent();
+	void StopEvent();
 };
 
 class IWorkEvent : public IThreadEvent {
@@ -25,12 +27,12 @@ public:
 	virtual void RunEventLoop() = 0;
 	virtual void RunStartEvent() = 0;
 	virtual ~IWorkEvent() {}
-	void RunEvent();
+	virtual void RunEvent();
+	virtual void StopEvent();
 protected:
-	void StopEvent();
+	bool eventWorking;
 private:
 	std::mutex eventLock;
-	bool eventWorking;
 };
 
 class AudioFileEvent : public ISingleEvent {
@@ -56,6 +58,8 @@ public:
 	virtual void RunEventLoop();
 	YoutubeEvent();
 	virtual ~YoutubeEvent();
+
+	virtual void StopEvent();
 
 	void SetupArgs(std::deque<std::string>& args);
 	std::string GetEventMessage();

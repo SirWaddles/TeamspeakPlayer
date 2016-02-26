@@ -48,7 +48,7 @@ private:
 	int currentPacket;
 };
 
-class FFMpegAudioFile;
+struct FFMpegAudioFile;
 
 class AudioFile {
 public:
@@ -124,10 +124,10 @@ private:
 };
 
 
-class TrackDeleteEvent : public IThreadEvent {
+class TrackDeleteEvent : public ISingleEvent {
 public:
 	TrackDeleteEvent(AudioFile* td);
-	virtual void RunEvent();
+	virtual void RunSingleEvent();
 private:
 	AudioFile* toDelete;
 };

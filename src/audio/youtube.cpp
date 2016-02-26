@@ -74,15 +74,18 @@ void YoutubeEvent::RunStartEvent(){
 void YoutubeEvent::RunEventLoop() {
 	bool frameRead = ytFile->readFrame();
 	if (!frameRead) {
-		printf("Frame read. Stopping\n");
-		StopEvent();
-		printf("Stopped\n");
+		eventWorking = false;
 	}
 }
 
+void YoutubeEvent::StopEvent() {
+	IWorkEvent::StopEvent();
+	ytFile = nullptr;
+}
+
 YoutubeEvent::~YoutubeEvent() {
-	// No-one owns me
-	printf("Event destroy\n");
-	ytFile->SetOriginator(nullptr);
+	if (ytFile) {
+		ytFile->SetOriginator(nullptr);
+	}
 	StopEvent();
 }

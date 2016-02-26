@@ -17,6 +17,7 @@ AudioFileEncoded::AudioFileEncoded(std::string filepath){
 	extDets = new FFMpegAudioFile();
 	TrackOver = false;
 	dataComplete = false;
+	looping = false;
 
 	extDets->pFormatCtx = NULL;
 	int error = avformat_open_input(&(extDets->pFormatCtx), filepath.c_str(), NULL, NULL);
@@ -76,18 +77,13 @@ AudioFile::~AudioFile() {
 }
 
 AudioFileEncoded::~AudioFileEncoded(){
+	if (originator) {
+		originator->StopEvent();
+	}
+
 	avcodec_close(extDets->context);
 	avformat_close_input(&(extDets->pFormatCtx));
 	swr_free(&(extDets->resContext));
-
-	printf("File destroy\n");
-	if (originator) {
-		// Ownership inversion end
-		// Small note - the destructor of this object will unlink this one, calling SetOriginator(nullptr)
-		printf("Deleting event from file\n");
-		delete originator;
-		printf("Deleted\n");
-	}
 }
 
 bool AudioFileEncoded::readFrame(){
@@ -177,7 +173,6 @@ TrackDeleteEvent::TrackDeleteEvent(AudioFile* tD){
 	toDelete = tD;
 }
 
-void TrackDeleteEvent::RunEvent(){
-	printf("Deleting track\n");
+void TrackDeleteEvent::RunSingleEvent(){
 	delete toDelete;
 }
