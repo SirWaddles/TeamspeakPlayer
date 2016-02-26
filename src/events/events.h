@@ -48,6 +48,8 @@ private:
 	std::string filePath;
 };
 
+class AudioFileEncoded;
+
 class YoutubeEvent : public IWorkEvent {
 public:
 	virtual void RunStartEvent();

@@ -84,8 +84,12 @@ public:
 
 	virtual void OutOfData();
 	bool readFrame();
+	void SetOriginator(IThreadEvent* origin);
 private:
 	FFMpegAudioFile* extDets;
+	IThreadEvent* originator;
+
+	bool dataComplete;
 };
 
 class AudioFileData : public AudioFile {

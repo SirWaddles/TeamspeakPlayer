@@ -66,13 +66,23 @@ void YoutubeEvent::RunStartEvent(){
 	hasTitle = true;
 
 	ytFile = new AudioFileEncoded(fullVideoUrl);
+	// weird ownership transfer, there's probably a more RAII way to do this, but I'll worry about move semantics later
+	ytFile->SetOriginator(this);
 	AudioM::getAudioManager()->AddFile(ytFile);
 }
 
 void YoutubeEvent::RunEventLoop() {
-	ytFile->readFrame();
+	bool frameRead = ytFile->readFrame();
+	if (!frameRead) {
+		printf("Frame read. Stopping\n");
+		StopEvent();
+		printf("Stopped\n");
+	}
 }
 
 YoutubeEvent::~YoutubeEvent() {
+	// No-one owns me
+	printf("Event destroy\n");
+	ytFile->SetOriginator(nullptr);
 	StopEvent();
 }
