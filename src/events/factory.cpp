@@ -28,12 +28,16 @@ void ISingleEvent::RunEvent() {
 
 void IWorkEvent::RunEvent() {
 	eventWorking = true;
-	while (eventWorking) {
+	RunStartEvent();
+	for (;;) {
+		std::lock_guard<std::mutex> loopLock(eventLock);
+		if (!eventWorking) break;
 		RunEventLoop();
 	}
 }
 
 void IWorkEvent::StopEvent() {
+	std::lock_guard<std::mutex> stopLock(eventLock);
 	eventWorking = false;
 }
 

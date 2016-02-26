@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include <deque>
+#include <mutex>
 
 class IThreadEvent {
 public:
@@ -22,10 +23,13 @@ public:
 class IWorkEvent : public IThreadEvent {
 public:
 	virtual void RunEventLoop() = 0;
+	virtual void RunStartEvent() = 0;
+	virtual ~IWorkEvent() {}
 	void RunEvent();
 protected:
 	void StopEvent();
 private:
+	std::mutex eventLock;
 	bool eventWorking;
 };
 
@@ -44,10 +48,12 @@ private:
 	std::string filePath;
 };
 
-class YoutubeEvent : public ISingleEvent {
+class YoutubeEvent : public IWorkEvent {
 public:
-	virtual void RunSingleEvent();
+	virtual void RunStartEvent();
+	virtual void RunEventLoop();
 	YoutubeEvent();
+	virtual ~YoutubeEvent();
 
 	void SetupArgs(std::deque<std::string>& args);
 	std::string GetEventMessage();
@@ -58,6 +64,8 @@ private:
 	bool hasTitle;
 	bool eventActive;
 	bool doLoop;
+
+	AudioFileEncoded* ytFile;
 };
 
 class SeekToEvent : public ISingleEvent {

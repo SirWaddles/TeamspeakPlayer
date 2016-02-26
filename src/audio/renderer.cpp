@@ -63,12 +63,6 @@ AudioFileEncoded::AudioFileEncoded(std::string filepath){
 	}
 
 	frames = 0;
-	bool frameSuccess = true;
-	while (lPacketQueue->size() <= 10){
-		frameSuccess = readFrame();
-		if (!frameSuccess) return;
-		frames++;
-	}
 }
 
 AudioFile::~AudioFile() {
@@ -86,16 +80,9 @@ AudioFileEncoded::~AudioFileEncoded(){
 	swr_free(&(extDets->resContext));
 }
 
-void AudioFile::SeekTo(double seconds){
-	double target = (double(frames) / duration) * seconds;
-	lPacketQueue->SeekTo((int)target);
-	rPacketQueue->SeekTo((int)target);
-}
-
 bool AudioFileEncoded::readFrame(){
 	AVPacket pkt;
 	int err = av_read_frame(extDets->pFormatCtx, &pkt);
-	printf("Reading frame\n");
 	if (err == AVERROR_EOF){
 		printf("Reached end of file.\n");
 		return false;
@@ -129,9 +116,6 @@ bool AudioFileEncoded::readFrame(){
 	unsigned char* barr[2];
 	barr[0] = lPacket.getData();
 	barr[1] = rPacket.getData();
-	//memcpy(lPacket.data, frame->data[0], or_data_size);
-	//memcpy(rPacket.data, frame->data[0], or_data_size);
-	//memcpy(rPacket.data, frame->data[1], or_data_size);
 
 	swr_convert(extDets->resContext, barr, reqSamples, (const uint8_t**)extDets->frame->extended_data, extDets->frame->nb_samples);
 	
@@ -144,6 +128,10 @@ bool AudioFileEncoded::readFrame(){
 	
 	//avcodec_free_frame(&frame);
 	return true;
+
+}
+
+void AudioFileEncoded::OutOfData() {
 
 }
 

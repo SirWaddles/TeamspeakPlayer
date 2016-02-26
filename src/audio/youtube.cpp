@@ -14,6 +14,7 @@ YoutubeEvent::YoutubeEvent(){
 	eventActive = false;
 	hasTitle = false;
 	doLoop = false;
+	ytFile = nullptr;
 }
 
 void YoutubeEvent::SetupArgs(std::deque<std::string>& args){
@@ -37,7 +38,7 @@ std::string YoutubeEvent::GetEventMessage(){
 	return "Playing: " + ytUrl;
 }
 
-void YoutubeEvent::RunSingleEvent(){
+void YoutubeEvent::RunStartEvent(){
 	if (!eventActive){
 		return;
 	}
@@ -64,6 +65,14 @@ void YoutubeEvent::RunSingleEvent(){
 	videoTitle = lM->GetLuaFuncStr();
 	hasTitle = true;
 
-	AudioFileEncoded* ytTrack = new AudioFileEncoded(fullVideoUrl);
-	AudioM::getAudioManager()->AddFile(ytTrack);
+	ytFile = new AudioFileEncoded(fullVideoUrl);
+	AudioM::getAudioManager()->AddFile(ytFile);
+}
+
+void YoutubeEvent::RunEventLoop() {
+	ytFile->readFrame();
+}
+
+YoutubeEvent::~YoutubeEvent() {
+	StopEvent();
 }

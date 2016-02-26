@@ -42,6 +42,7 @@ public:
 
 private:
 	std::vector<AudioPacket> mPackets;
+	std::mutex packetLock;
 	AudioFile* ownerFile;
 	int readHead;
 	int currentPacket;
@@ -55,10 +56,11 @@ public:
 	virtual ~AudioFile();
 	
 	virtual void GetAllData(short* outData, unsigned long frameCount);
-	void FinishTrack();
-	void SeekTo(double seconds);
+	virtual void FinishTrack();
+	virtual bool IsTrackOver();
+	virtual void OutOfData();
 
-	bool IsTrackOver();
+	void SeekTo(double seconds);
 
 	bool looping;
 protected:
@@ -79,6 +81,8 @@ class AudioFileEncoded : public AudioFile {
 public:
 	AudioFileEncoded(std::string filepath);
 	virtual ~AudioFileEncoded();
+
+	virtual void OutOfData();
 	bool readFrame();
 private:
 	FFMpegAudioFile* extDets;

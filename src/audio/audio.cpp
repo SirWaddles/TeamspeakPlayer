@@ -50,7 +50,7 @@ void AudioM::StopTrack(){
 		return;
 	}
 	currentFile = nullptr;
-	
+
 	std::list<AudioFile*>::iterator it;
 	for (it = fileQueue.begin(); it != fileQueue.end(); it++){
 		AudioFile* file = (*it);
@@ -108,9 +108,23 @@ void AudioFile::GetAllData(short* outData, unsigned long frameCount) {
 }
 
 void AudioFile::FinishTrack() {
-	if (looping) return;
 	if (TrackOver) return;
 	TrackOver = true;
+}
+
+void AudioFile::OutOfData() {
+	if (looping) {
+		lPacketQueue->SeekTo(0);
+		rPacketQueue->SeekTo(0);
+	} else {
+		FinishTrack();
+	}
+}
+
+void AudioFile::SeekTo(double seconds) {
+	double target = (double(frames) / duration) * seconds;
+	lPacketQueue->SeekTo((int)target);
+	rPacketQueue->SeekTo((int)target);
 }
 
 void AudioM::AudioData(const void* input, void* output, unsigned long frameCount, double time){
@@ -128,18 +142,19 @@ void AudioM::AudioData(const void* input, void* output, unsigned long frameCount
 	}
 }
 
-short AudioPacketQueue::IncrementPacket(){
+short AudioPacketQueue::IncrementPacket() {
+	std::unique_lock<std::mutex> lockGuard(packetLock, std::try_to_lock);
+	if (!lockGuard.owns_lock()) {
+		return 0;
+	}
+	if (currentPacket >= mPackets.size()) {
+		ownerFile->OutOfData();
+		return 0;
+	}
 	AudioPacket* packet = &mPackets[currentPacket];
-	readHead += 2;
-	if (readHead >= packet->getLength()){
+    readHead += 2;
+	if (readHead >= packet->getLength()) {
 		currentPacket++;
-		if (currentPacket >= mPackets.size()){
-			currentPacket = 0;
-			ownerFile->FinishTrack();
-			//AudioM::getAudioManager()->NextTrack();
-			return 0;
-		}
-		packet = &mPackets[currentPacket];
 		readHead = 0;
 	}
 	return *((short*)(&(packet->getData()[readHead])));
@@ -208,6 +223,7 @@ void AudioPacketQueue::SeekTo(int packet){
 }
 
 void AudioPacketQueue::AddPacket(AudioPacket& nPacket){
+	std::lock_guard<std::mutex> lockGuard(packetLock);
 	mPackets.push_back(std::move(nPacket));
 }
 
